@@ -166,6 +166,10 @@ public class Bouncer implements Serializable {
     public void setDirChangeCount(int dirChangeCount) {
         this.dirChangeCount = dirChangeCount;
     }
+
+    public Long getId() {
+        return id;
+    }
     
     
 }
