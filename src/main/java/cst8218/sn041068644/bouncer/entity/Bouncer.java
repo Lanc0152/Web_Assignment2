@@ -28,22 +28,39 @@ public class Bouncer implements Serializable {
     @Max(X_LIMIT)
     private int x;
     @Min(0)
-    @Max(y_LIMIT)
+    @Max(Y_LIMIT)
     private int y;
     @Min(1)
-    @Max(size_LIMIT)
+    @Max(SIZE_LIMIT)
     private int size;
     @Min(1)
-    @Max(maxTravel_LIMIT)
+    @Max(MAX_TRAVEL_LIMIT)
     private int maxTravel;
     
+    private int currentTravel;
+    
+    private int mvtDirection;
+    
+    private int dirChangeCount;
+    
     private final int X_LIMIT = 50;
-    private final int y_LIMIT = 50;
-    private final int size_LIMIT = 100;
-    private final int maxTravel_LIMIT = 100;
+    private final int Y_LIMIT = 50;
+    
+    private final int SIZE_LIMIT = 100;
+    private final int INITIAL_SIZE = 50;
+    
+    private final int MAX_TRAVEL_LIMIT = 100;
+    private final int TRAVEL_SPEED = 1;
+    
+    private final int MAX_DIR_CHANGES = 25;
+    private final int DECREASE_RATE = 1;
 
     public void setId(Long id) {
         this.id = id;
+    }
+    
+    public void Bouncer(){
+    
     }
     
     public void Bouncer(int x, int y, int size, int maxTravel){
@@ -70,6 +87,23 @@ public class Bouncer implements Serializable {
             return false;
         }
         return true;
+    }
+    
+    /**
+    * Updates the properties to simulate the passing of one unit of time.
+    */
+    public void timeStep() {
+        if (maxTravel > 0){
+        currentTravel += mvtDirection * TRAVEL_SPEED;
+            if (Math.abs(currentTravel) >= maxTravel){
+            mvtDirection = -mvtDirection;
+            dirChangeCount++;
+                if (dirChangeCount > MAX_DIR_CHANGES){
+                maxTravel -= DECREASE_RATE;
+                dirChangeCount = 0;
+                }
+            }
+        }
     }
 
     @Override
@@ -107,6 +141,30 @@ public class Bouncer implements Serializable {
 
     public void setMaxTravel(int maxTravel) {
         this.maxTravel = maxTravel;
+    }
+
+    public int getCurrentTravel() {
+        return currentTravel;
+    }
+
+    public void setCurrentTravel(int currentTravel) {
+        this.currentTravel = currentTravel;
+    }
+
+    public int getMvtDirection() {
+        return mvtDirection;
+    }
+
+    public void setMvtDirection(int mvtDirection) {
+        this.mvtDirection = mvtDirection;
+    }
+
+    public int getDirChangeCount() {
+        return dirChangeCount;
+    }
+
+    public void setDirChangeCount(int dirChangeCount) {
+        this.dirChangeCount = dirChangeCount;
     }
     
     
