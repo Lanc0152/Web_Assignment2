@@ -8,6 +8,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import java.io.Serializable;
 
 /**
@@ -21,15 +23,35 @@ public class Bouncer implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
-    public Long getId() {
-        return id;
-    }
+    
+    @Min(0)
+    @Max(X_LIMIT)
+    private int x;
+    @Min(0)
+    @Max(y_LIMIT)
+    private int y;
+    @Min(1)
+    @Max(size_LIMIT)
+    private int size;
+    @Min(1)
+    @Max(maxTravel_LIMIT)
+    private int maxTravel;
+    
+    private final int X_LIMIT = 50;
+    private final int y_LIMIT = 50;
+    private final int size_LIMIT = 100;
+    private final int maxTravel_LIMIT = 100;
 
     public void setId(Long id) {
         this.id = id;
     }
-
+    
+    public void Bouncer(int x, int y, int size, int maxTravel){
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.maxTravel = maxTravel;
+    }
     @Override
     public int hashCode() {
         int hash = 0;
@@ -54,5 +76,38 @@ public class Bouncer implements Serializable {
     public String toString() {
         return "cst8218.sn041068644.bouncer.entity.Bouncer[ id=" + id + " ]";
     }
+
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getSize() {
+        return size;
+    }
+
+    public void setSize(int size) {
+        this.size = size;
+    }
+
+    public int getMaxTravel() {
+        return maxTravel;
+    }
+
+    public void setMaxTravel(int maxTravel) {
+        this.maxTravel = maxTravel;
+    }
+    
     
 }
