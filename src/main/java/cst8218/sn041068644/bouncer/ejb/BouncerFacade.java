@@ -12,7 +12,10 @@ import jakarta.persistence.PersistenceContext;
 
 /**
  *
- * @author seans
+ * @author sean lancaster 
+ * 041068644
+ * 
+ * This class is an EJB acting as a layer to interact with the bouncer entity
  */
 @Stateless
 @LocalBean

@@ -19,7 +19,10 @@ import java.util.List;
 
 /**
  *
- * @author seans
+ * @author sean lancaster 
+ * 041068644
+ * 
+ * This class uses an entity manager to perform transactions with the database
  */
 public class BouncerJpaController {
     public BouncerJpaController(UserTransaction utx, EntityManagerFactory emf) {
@@ -47,7 +50,7 @@ public class BouncerJpaController {
                 throw new RollbackFailureException("An error occurred attempting to roll back the transaction.", re);
             }
             if (findBouncer(bouncer.getId()) != null) {
-                throw new PreexistingEntityException("Contact " + bouncer + " already exists.", ex);
+                throw new PreexistingEntityException("Bouncer " + bouncer + " already exists.", ex);
             }
             throw ex;
         } finally {
@@ -74,7 +77,7 @@ public class BouncerJpaController {
             if (msg == null || msg.length() == 0) {
                 Long id = bouncer.getId();
                 if (findBouncer(id) == null) {
-                    throw new NonexistentEntityException("The contact with id " + id + " no longer exists.");
+                    throw new NonexistentEntityException("The bouncer with id " + id + " no longer exists.");
                 }
             }
             throw ex;
@@ -95,7 +98,7 @@ public class BouncerJpaController {
                 bouncer = em.getReference(Bouncer.class, id);
                 bouncer.getId();
             } catch (EntityNotFoundException enfe) {
-                throw new NonexistentEntityException("The contact with id " + id + " no longer exists.", enfe);
+                throw new NonexistentEntityException("The bouncer with id " + id + " no longer exists.", enfe);
             }
             em.remove(bouncer);
             utx.commit();

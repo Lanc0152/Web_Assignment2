@@ -8,53 +8,60 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import java.io.Serializable;
 
 /**
  *
- * @author seans
+ * @author sean lancaster 
+ * 041068644
+ * 
+ * This class represents the entity being stored in our database
  */
 @Entity
+@Table(name = "bouncer")
 public class Bouncer implements Serializable {
 
+    private static final int X_LIMIT = 500;
+    private static final int Y_LIMIT = 500;
+    
+    private static final int SIZE_LIMIT = 100;
+    private static final int INITIAL_SIZE = 50;
+    
+    private static final int MAX_TRAVEL_LIMIT = 100;
+    private static final int TRAVEL_SPEED = 10;
+    
+    private static final int MAX_DIR_CHANGES = 25;
+    private static final int DECREASE_RATE = 5;
+
     private static final long serialVersionUID = 1L;
+    
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    
+        
     @Min(0)
     @Max(X_LIMIT)
-    private int x;
+    private Integer x = 0;
     @Min(0)
     @Max(Y_LIMIT)
-    private int y;
+    private Integer y = 0;
     @Min(1)
     @Max(SIZE_LIMIT)
-    private int size;
+    private Integer size = INITIAL_SIZE;
     @Min(1)
-    @Max(MAX_TRAVEL_LIMIT)
-    private int maxTravel;
+//    @Max(MAX_TRAVEL_LIMIT)
+    private Integer maxTravel = 0;
     
-    private int currentTravel;
+    private Integer currentTravel = INITIAL_SIZE;
     
-    private int mvtDirection;
+    private Integer mvtDirection = 1;
     
-    private int dirChangeCount;
+    private Integer dirChangeCount = 0;
     
-    private final int X_LIMIT = 50;
-    private final int Y_LIMIT = 50;
-    
-    private final int SIZE_LIMIT = 100;
-    private final int INITIAL_SIZE = 50;
-    
-    private final int MAX_TRAVEL_LIMIT = 100;
-    private final int TRAVEL_SPEED = 1;
-    
-    private final int MAX_DIR_CHANGES = 25;
-    private final int DECREASE_RATE = 1;
-
+   
     public void setId(Long id) {
         this.id = id;
     }
@@ -62,12 +69,15 @@ public class Bouncer implements Serializable {
     public void Bouncer(){
     
     }
-    
-    public void Bouncer(int x, int y, int size, int maxTravel){
+    //this is the constructor for creating the bouncer object
+    public void Bouncer(Integer x, Integer y, Integer size, Integer maxTravel, Integer currentTravel){
+        
+        
         this.x = x;
         this.y = y;
         this.size = size;
         this.maxTravel = maxTravel;
+        this.currentTravel = currentTravel;
     }
     @Override
     public int hashCode() {
@@ -105,65 +115,83 @@ public class Bouncer implements Serializable {
             }
         }
     }
+    // this is a method used by the restful interface to easily update existing entities
+    public void updates(Bouncer oldbouncer){
+        if(this.getX() != null){
+            oldbouncer.setX(this.x);
+        }
+        if(this.getY() != null){
+            oldbouncer.setX(this.y);
+        }
+        if(this.getSize() != null){
+            oldbouncer.setSize(this.size);
+        }
+        if(this.getCurrentTravel() != null){
+            oldbouncer.setCurrentTravel(this.currentTravel);
+        }
+        if(this.getMaxTravel() != null){
+            oldbouncer.setMaxTravel(this.maxTravel);
+        }
+    }
 
     @Override
     public String toString() {
         return "cst8218.sn041068644.bouncer.entity.Bouncer[ id=" + id + " ]";
     }
 
-    public int getX() {
+    public Integer getX() {
         return x;
     }
 
-    public void setX(int x) {
+    public void setX(Integer x) {
         this.x = x;
     }
 
-    public int getY() {
+    public Integer getY() {
         return y;
     }
 
-    public void setY(int y) {
+    public void setY(Integer y) {
         this.y = y;
     }
 
-    public int getSize() {
+    public Integer getSize() {
         return size;
     }
 
-    public void setSize(int size) {
+    public void setSize(Integer size) {
         this.size = size;
     }
 
-    public int getMaxTravel() {
+    public Integer getMaxTravel() {
         return maxTravel;
     }
 
-    public void setMaxTravel(int maxTravel) {
+    public void setMaxTravel(Integer maxTravel) {
         this.maxTravel = maxTravel;
     }
 
-    public int getCurrentTravel() {
+    public Integer getCurrentTravel() {
         return currentTravel;
     }
 
-    public void setCurrentTravel(int currentTravel) {
+    public void setCurrentTravel(Integer currentTravel) {
         this.currentTravel = currentTravel;
     }
 
-    public int getMvtDirection() {
+    public Integer getMvtDirection() {
         return mvtDirection;
     }
 
-    public void setMvtDirection(int mvtDirection) {
+    public void setMvtDirection(Integer mvtDirection) {
         this.mvtDirection = mvtDirection;
     }
 
-    public int getDirChangeCount() {
+    public Integer getDirChangeCount() {
         return dirChangeCount;
     }
 
-    public void setDirChangeCount(int dirChangeCount) {
+    public void setDirChangeCount(Integer dirChangeCount) {
         this.dirChangeCount = dirChangeCount;
     }
 

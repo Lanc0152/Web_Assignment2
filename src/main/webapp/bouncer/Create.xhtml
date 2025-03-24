@@ -25,11 +25,7 @@
                     <h:inputText id="maxTravel" value="#{bouncerController.selected.maxTravel}" title="#{bundle.CreateBouncerTitle_maxTravel}" />
                     <h:outputLabel value="#{bundle.CreateBouncerLabel_currentTravel}" for="currentTravel" />
                     <h:inputText id="currentTravel" value="#{bouncerController.selected.currentTravel}" title="#{bundle.CreateBouncerTitle_currentTravel}" />
-                    <h:outputLabel value="#{bundle.CreateBouncerLabel_mvtDirection}" for="mvtDirection" />
-                    <h:inputText id="mvtDirection" value="#{bouncerController.selected.mvtDirection}" title="#{bundle.CreateBouncerTitle_mvtDirection}" />
-                    <h:outputLabel value="#{bundle.CreateBouncerLabel_dirChangeCount}" for="dirChangeCount" />
-                    <h:inputText id="dirChangeCount" value="#{bouncerController.selected.dirChangeCount}" title="#{bundle.CreateBouncerTitle_dirChangeCount}" />
-                </h:panelGrid>
+                   </h:panelGrid>
                 <br />
                 <h:commandLink action="#{bouncerController.create}" value="#{bundle.CreateBouncerSaveLink}" />
                 <br />

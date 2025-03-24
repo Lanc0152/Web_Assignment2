@@ -16,12 +16,19 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
+import java.net.URI;
 import java.util.List;
 
 /**
  *
- * @author seans
+ * @author sean lancaster 
+ * 041068644
+ * 
+ * This class implements restful api to conduct basic CRUD operations
  */
 @Stateless
 @Path("cst8218.sn041068644.bouncer.entity.bouncer")
@@ -37,48 +44,98 @@ public class BouncerFacadeREST extends AbstractFacade<Bouncer> {
     public BouncerFacadeREST() {
         super(Bouncer.class);
     }
-
+    //this is a post request on the root resource
     @POST
-    @Override
     @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    public void create(Bouncer entity) {
-        super.create(entity);
-    }
+    public Response createPost(Bouncer entity, @Context UriInfo uriInfo) {
+        URI location = URI.create(uriInfo.getRequestUri().getPath() + "/" + entity.getId());
 
+        if(entity.getId() == null){
+            super.create(entity);
+        
+        return Response.status(Response.Status.CREATED).location(location).entity(entity).build();
+        } else {
+               if(super.find(entity.getId()) != null){
+                   entity.updates(super.find(entity.getId()));
+                   
+                  return Response.status(Response.Status.OK).location(location).entity(entity).build();
+
+               } 
+        }
+        return Response.status(Response.Status.BAD_REQUEST).location(location).entity(entity).build();
+
+    }
+    //this is a post request on a specific id
+     @POST
+     @Path("{id}")
+     @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+     public Response createPostId(Bouncer entity, @Context UriInfo uriInfo, @PathParam("id") Long id) {
+      URI location = URI.create(uriInfo.getRequestUri().getPath() + "/" + entity.getId());
+
+         if(super.find(entity.getId()) != null && entity.getId() == id){
+             super.edit(entity);
+             
+             return Response.status(Response.Status.OK).location(location).entity(entity).build();
+
+         }
+         
+        return Response.status(Response.Status.BAD_REQUEST).location(location).entity(entity).build();
+    }
+     //this is a put request on a specific id
     @PUT
     @Path("{id}")
     @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
-    public void edit(@PathParam("id") Long id, Bouncer entity) {
-        super.edit(entity);
-    }
+    public Response edit(@PathParam("id") Long id, Bouncer entity, @Context UriInfo uriInfo) {
+        URI location = URI.create(uriInfo.getRequestUri().getPath() + "/" + entity.getId());
 
+         if(super.find(entity.getId()) != null && entity.getId() == id){
+            
+             entity.updates(super.find(entity.getId()));
+                   
+             return Response.status(Response.Status.OK).location(location).entity(entity).build();
+
+         }
+         
+        return Response.status(Response.Status.BAD_REQUEST).location(location).entity(entity).build();
+   
+    }
+    //this is a put request on the root resource
+    @PUT
+    @Consumes({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
+    public Response notAllowed(Bouncer entity, @Context UriInfo uriInfo) {
+        URI location = URI.create(uriInfo.getRequestUri().getPath() + "/" + entity.getId());
+
+         
+        return Response.status(Response.Status.UNAUTHORIZED).location(location).entity(entity).build();
+    }
+//this is a delete request on a specific id
     @DELETE
     @Path("{id}")
     public void remove(@PathParam("id") Long id) {
         super.remove(super.find(id));
     }
-
+//this is a get request on a specific id
     @GET
     @Path("{id}")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public Bouncer find(@PathParam("id") Long id) {
         return super.find(id);
     }
-
+//this is a get request on the root resource
     @GET
     @Override
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public List<Bouncer> findAll() {
         return super.findAll();
     }
-
+//this is a get request on a range of id's
     @GET
     @Path("{from}/{to}")
     @Produces({MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON})
     public List<Bouncer> findRange(@PathParam("from") Integer from, @PathParam("to") Integer to) {
         return super.findRange(new int[]{from, to});
     }
-
+//this is a get request to see how many id's are stored
     @GET
     @Path("count")
     @Produces(MediaType.TEXT_PLAIN)

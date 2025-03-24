@@ -19,7 +19,13 @@ import jakarta.faces.model.SelectItem;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceUnit;
 import jakarta.transaction.UserTransaction;
-
+/**
+ *
+ * @author sean lancaster 
+ * 041068644
+ * 
+ * This class works with jsf to manage user interactions with the database and calls the jpacontroller to perform said actions
+ */
 @Named("bouncerController")
 @SessionScoped
 public class BouncerController implements Serializable {
