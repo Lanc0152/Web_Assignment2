@@ -15,116 +15,303 @@
     <body>
         <div id="root"></div>
         <script type="text/babel" data-type="module" >
-        import React, { useEffect, useState, StrictMode, useRef } from 'react';
-        import { createRoot } from 'react-dom/client';
+import React, { useEffect, useState, useRef } from 'react';
+import { createRoot } from 'react-dom/client';
+
+function BouncerCanvas({ bouncers }) {
+  const canvasRef = useRef(null);
+  // Map each bouncer's id to its animated state.
+  const animatedBouncersRef = useRef({});
+
+  // Initialize or update animated bouncers when props change.
+  useEffect(() => {
+    bouncers.forEach(b => {
+      if (!animatedBouncersRef.current[b.id]) {
+        animatedBouncersRef.current[b.id] = {
+          x: b.x,
+          y: b.y,
+          size: b.size,
+          maxTravel: b.maxTravel,
+          currentTravel: b.currentTravel || 0,
+          // Constant velocity: fixed speed of 2, with a random direction.
+          dx: 2 * (Math.random() < 0.5 ? -1 : 1),
+          dy: 2 * (Math.random() < 0.5 ? -1 : 1)
+        };
+      } else {
+        // Update properties in case they have changed via the UI.
+        animatedBouncersRef.current[b.id].size = b.size;
+        animatedBouncersRef.current[b.id].maxTravel = b.maxTravel;
+        animatedBouncersRef.current[b.id].currentTravel = b.currentTravel;
+      }
+    });
+    // Remove any bouncers that no longer exist.
+    Object.keys(animatedBouncersRef.current).forEach(id => {
+      if (!bouncers.find(b => b.id.toString() === id.toString())) {
+        delete animatedBouncersRef.current[id];
+      }
+    });
+  }, [bouncers]);
+
+  // Animation loop: update positions, currentTravel, and draw bouncers.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+      Object.values(animatedBouncersRef.current).forEach(bouncer => {
+        // Update position using constant velocity.
+        bouncer.x += bouncer.dx;
+        bouncer.y += bouncer.dy;
+        // Calculate distance traveled in this frame.
+        const speed = Math.sqrt(bouncer.dx * bouncer.dx + bouncer.dy * bouncer.dy);
+        bouncer.currentTravel = (bouncer.currentTravel || 0) + speed;
+
+        // If max travel is reached, reverse direction and reset travel counter.
+        if (bouncer.currentTravel >= bouncer.maxTravel) {
+          bouncer.dx = -bouncer.dx;
+          bouncer.dy = -bouncer.dy;
+          bouncer.currentTravel = 0;
+        }
+
+        // Bounce off canvas boundaries.
+        if (bouncer.x < 0 || bouncer.x + bouncer.size > canvasWidth) {
+          bouncer.dx = -bouncer.dx;
+          bouncer.x = Math.max(0, Math.min(bouncer.x, canvasWidth - bouncer.size));
+          bouncer.currentTravel = 0;
+        }
+        if (bouncer.y < 0 || bouncer.y + bouncer.size > canvasHeight) {
+          bouncer.dy = -bouncer.dy;
+          bouncer.y = Math.max(0, Math.min(bouncer.y, canvasHeight - bouncer.size));
+          bouncer.currentTravel = 0;
+        }
+
+        // Draw the bouncer.
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(bouncer.x, bouncer.y, bouncer.size, bouncer.size);
+      });
+
+      requestAnimationFrame(animate);
+    };
+
+    animate();
+  }, []);
+
+  return (
+    <div>
+      <h2>Canvas Animation</h2>
+      <canvas
+        ref={canvasRef}
+        width={600}
+        height={400}
+        style={{ border: '1px solid black' }}
+      />
+    </div>
+  );
+}
 
 function MyApp() {
-    const [bouncers, setBouncers] = useState([]);
-    const [selected, setSelected] = useState(null);
-    const [newBouncer, setNewBouncer] = useState({ x: 0, y: 0, width: 50, height: 50 });
-    const [showForm, setShowForm] = useState(false);
+  const [bouncers, setBouncers] = useState([]);
+  const [newBouncer, setNewBouncer] = useState({ 
+    x: 0, 
+    y: 0, 
+    size: 50, 
+    maxTravel: 200, 
+    currentTravel: 0 
+  });
+  const [showForm, setShowForm] = useState(false);
 
-    useEffect(() => {
-        async function fetchBouncers() {
-            let response = await fetch("http://localhost:8080/bouncer-sn041068644/resources/cst8218.sn041068644.bouncer.entity.bouncer");
-            let data = await response.json();
-            setBouncers(data);
-        }
-        
-        fetchBouncers();
-        const interval = setInterval(fetchBouncers, 1000); // Auto-refresh
-        return () => clearInterval(interval);
-    }, []);
-
-    const handleInputChange = (event, index, field) => {
-        const updatedBouncers = [...bouncers];
-        updatedBouncers[index] = { ...updatedBouncers[index], [field]: event.target.value };
-        setBouncers(updatedBouncers);
-    };
-
-    const handleUpdate = async (id, updatedBouncer) => {
-        await fetch(`http://localhost:8080/bouncer-sn041068644/resources/cst8218.sn041068644.bouncer.entity.bouncer/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedBouncer)
-        });
-    };
-
-    const handleDelete = async (id) => {
-        await fetch(`http://localhost:8080/bouncer-sn041068644/resources/cst8218.sn041068644.bouncer.entity.bouncer/${id}`, { method: 'DELETE' });
-        setBouncers(bouncers.filter(b => b.id !== id));
-    };
-    
-    const handleFormChange = (event) => {
-        setNewBouncer({ ...newBouncer, [event.target.name]: Number(event.target.value) });
+  // Fetch bouncers from REST.
+  useEffect(() => {
+    async function fetchBouncers() {
+      try {
+        const result = await fetch(
+          "http://localhost:8080/resources/cst8218.sn041068644.bouncer.entity.bouncer",
+          {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+          }
+        );
+        const data = await result.json();
+        setBouncers(data);
+      } catch (error) {
+        console.error("Error fetching bouncers:", error);
+      }
     }
+    fetchBouncers();
+    const interval = setInterval(fetchBouncers, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-    const handleAddBouncer = async () => {
-        //const newBouncer = { x: 0, y: 0, width: 50, height: 50 };
-        let response = await fetch("http://localhost:8080/bouncer-sn041068644/resources/cst8218.sn041068644.bouncer.entity.bouncer", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newBouncer)
-        });
-        let addedBouncer = await response.json();
-        setBouncers([...bouncers, addedBouncer]);
-        setShowForm(false);
-        const newBouncer = { x: 0, y: 0, width: 50, height: 50 };
-    };
+  const handleInputChange = (event, index, field) => {
+    const updatedBouncers = [...bouncers];
+    updatedBouncers[index] = { ...updatedBouncers[index], [field]: Number(event.target.value) };
+    setBouncers(updatedBouncers);
+  };
 
-    return (
+  // Update a bouncer via REST .
+  const handleUpdate = async (id, updatedBouncer) => {
+    try {
+      await fetch(
+        "http://localhost:8080/resources/cst8218.sn041068644.bouncer.entity.bouncer/" + id,
+        {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(updatedBouncer)
+        }
+      );
+    } catch (error) {
+      console.error("Error updating bouncer:", error);
+    }
+  };
+
+  // Delete a bouncer via REST.
+  const handleDelete = async (id) => {
+    try {
+      await fetch(
+        "http://localhost:8080/resources/cst8218.sn041068644.bouncer.entity.bouncer/" + id,
+        { 
+          method: 'DELETE',
+          headers: { 'Accept': 'application/json' }
+        }
+      );
+      setBouncers(bouncers.filter(b => b.id !== id));
+    } catch (error) {
+      console.error("Error deleting bouncer:", error);
+    }
+  };
+
+  const handleFormChange = (event) => {
+    setNewBouncer({ ...newBouncer, [event.target.name]: Number(event.target.value) });
+  };
+
+  // Add a new bouncer via REST.
+  const handleAddBouncer = async () => {
+    try {
+      const result = await fetch(
+        "http://localhost:8080/resources/cst8218.sn041068644.bouncer.entity.bouncer",
+        {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(newBouncer)
+        }
+      );
+      const addedBouncer = await result.json();
+      setBouncers([...bouncers, addedBouncer]);
+      setShowForm(false);
+    } catch (error) {
+      console.error("Error adding bouncer:", error);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Bouncer List</h2>
+      <button onClick={() => setShowForm(true)}>Add New Bouncer</button>
+
+      {showForm && (
         <div>
-            <h2>Bouncer List</h2>
-            <button onClick={() => setShowForm(true)}>Add New Bouncer</button>
-
-            {showForm && (
-                <div>
-                    <h3>New Bouncer Details</h3>
-                    <label>X: <input type="number" name="x" value={newBouncer.x} onChange={handleFormChange} /></label>
-                    <label>Y: <input type="number" name="y" value={newBouncer.y} onChange={handleFormChange} /></label>
-                    <label>Width: <input type="number" name="width" value={newBouncer.width} onChange={handleFormChange} /></label>
-                    <label>Height: <input type="number" name="height" value={newBouncer.height} onChange={handleFormChange} /></label>
-                    <button onClick={handleAddBouncer}>Submit</button>
-                    <button onClick={() => setShowForm(false)}>Cancel</button>
-                </div>
-            )}
-    
-            <table border="1">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>X</th>
-                        <th>Y</th>
-                        <th>Width</th>
-                        <th>Height</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {bouncers.map((bouncer, index) => (
-                        <tr key={bouncer.id}>
-                            <td>{bouncer.id}</td>
-                            <td><input type="number" value={bouncer.x} onChange={(e) => handleInputChange(e, index, 'x')} /></td>
-                            <td><input type="number" value={bouncer.y} onChange={(e) => handleInputChange(e, index, 'y')} /></td>
-                            <td><input type="number" value={bouncer.width} onChange={(e) => handleInputChange(e, index, 'width')} /></td>
-                            <td><input type="number" value={bouncer.height} onChange={(e) => handleInputChange(e, index, 'height')} /></td>
-                            <td>
-                                <button onClick={() => handleUpdate(bouncer.id, bouncer)}>Update</button>
-                                <button onClick={() => handleDelete(bouncer.id)}>Delete</button>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+          <h3>New Bouncer Details</h3>
+          <label>
+            X: <input type="number" name="x" value={newBouncer.x} onChange={handleFormChange} />
+          </label>
+          <label>
+            Y: <input type="number" name="y" value={newBouncer.y} onChange={handleFormChange} />
+          </label>
+          <label>
+            Size: <input type="number" name="size" value={newBouncer.size} onChange={handleFormChange} />
+          </label>
+          <label>
+            Max Travel: <input type="number" name="maxTravel" value={newBouncer.maxTravel} onChange={handleFormChange} />
+          </label>
+          <label>
+            Current Travel: <input type="number" name="currentTravel" value={newBouncer.currentTravel} onChange={handleFormChange} />
+          </label>
+          <button onClick={handleAddBouncer}>Submit</button>
+          <button onClick={() => setShowForm(false)}>Cancel</button>
         </div>
-    );
+      )}
+
+      <table border="1">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>X</th>
+            <th>Y</th>
+            <th>Size</th>
+            <th>Max Travel</th>
+            <th>Current Travel</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bouncers.map((bouncer, index) => (
+            <tr key={bouncer.id}>
+              <td>{bouncer.id}</td>
+              <td>
+                <input
+                  type="number"
+                  value={bouncer.x}
+                  onChange={(e) => handleInputChange(e, index, 'x')}
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  value={bouncer.y}
+                  onChange={(e) => handleInputChange(e, index, 'y')}
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  value={bouncer.size}
+                  onChange={(e) => handleInputChange(e, index, 'size')}
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  value={bouncer.maxTravel}
+                  onChange={(e) => handleInputChange(e, index, 'maxTravel')}
+                />
+              </td>
+              <td>
+                <input
+                  type="number"
+                  value={bouncer.currentTravel}
+                  onChange={(e) => handleInputChange(e, index, 'currentTravel')}
+                />
+              </td>
+              <td>
+                <button onClick={() => handleUpdate(bouncer.id, bouncer)}>Update</button>
+                <button onClick={() => handleDelete(bouncer.id)}>Delete</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {/* Render the canvas animation */}
+      <BouncerCanvas bouncers={bouncers} />
+    </div>
+  );
 }
 
 const container = document.getElementById('root');
 const root = createRoot(container);
 root.render(<MyApp />);
 
+
         </script>
     </body>
 </html>
-
