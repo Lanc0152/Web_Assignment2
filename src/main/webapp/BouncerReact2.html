@@ -18,115 +18,107 @@
         import React, { useEffect, useState, StrictMode, useRef } from 'react';
         import { createRoot } from 'react-dom/client';
 
-        function MyApp() {
-            const [selected, setSelected] = useState({});
-            const [contacts, setContacts] = useState(
-            []);
-            useEffect(() => {
-                async function getContacts() {
-                    let result = await fetch(
-                    "http://localhost:8080/mavenproject4/resources/cst8218.lanc0152.mavenproject4.contact", {
-                        method: 'GET', headers: {'Accept': 'application/json'}
-                        });
-                    const json = await result.json();
-                    console.log("Contacts:", json);
-                    setContacts(json);
-                    };
-                //getContacts();
-                //now we set an interval to call getContacts every 300ms
-                const timeInterval = setInterval(getContacts, 300);
-                //return a function to clean up if the user leaves the page
-                return () => clearInterval(timeInterval);
-                }, []);
+function MyApp() {
+    const [bouncers, setBouncers] = useState([]);
+    const [selected, setSelected] = useState(null);
+    const [newBouncer, setNewBouncer] = useState({ x: 0, y: 0, width: 50, height: 50 });
+    const [showForm, setShowForm] = useState(false);
 
-                const handleClick = (event, field, index) => {
-                setSelected({"index":index, "field":field, "value":event.target.value});
-                console.log("Selected:", selected);
-                };
+    useEffect(() => {
+        async function fetchBouncers() {
+            let response = await fetch("http://localhost:8080/bouncer-sn041068644/resources/cst8218.sn041068644.bouncer.entity.bouncer");
+            let data = await response.json();
+            setBouncers(data);
+        }
+        
+        fetchBouncers();
+        const interval = setInterval(fetchBouncers, 1000); // Auto-refresh
+        return () => clearInterval(interval);
+    }, []);
 
-            function handleChange(event, field, index) {
-                setSelected({"index":index, "field":selected.field, "value":event.target.value});
-            }
+    const handleInputChange = (event, index, field) => {
+        const updatedBouncers = [...bouncers];
+        updatedBouncers[index] = { ...updatedBouncers[index], [field]: event.target.value };
+        setBouncers(updatedBouncers);
+    };
 
-            const handleSubmit = (event) => {
-                var newItem;
-                contacts.map((item, key) => {
-                    if (key === selected.index) { //this is the one the user is changing
-                        newItem = Object.assign({}, item, {[selected.field]: selected.value}); //make a copy of the item to change
-                        setSelected({}); // reset selected until next click/change
-                        fetch("http://localhost:8080/mavenproject4/resources/cst8218.lanc0152.mavenproject4.contact/" + item.id, {
-                            method: 'PUT',
-                            body: JSON.stringify(newItem),
-                            headers: {'Content-type': 'application/json', 'Authorization': 'Basic ' + btoa('tgk' + ":" + 'tgkpass')}
-                        }).then(res => res.text());
-                    }
-                });
-                event.preventDefault();
-            };
-            return(
-            <div>
-                <ul>
-                    {contacts.map((item, key) => {
-                    return <li key={key}>{item.firstName}{item.lastName}{item.homePhone}</li>;
-                    })}
-                </ul>
-                <form onSubmit={handleSubmit}>
-                    <table>
-                        <tr>
-                            <th>firstName</th>
-                            <th>lastName</th>
-                            <th>homePhone</th>
-                            {selected.field !== null ? <th> new{selected.field}</th>: ""}
-                        </tr>{contacts.map((item,key)=>{
-                            return (
-                                <tr>
-                                    <td> 
-                                        <input 
-                                            type="text" 
-                                            name={item.id} 
-                                            value={item.firstName} 
-                                            onChange={(e)=>handleChange(e,"firstName",key)}
-                                            onClick={(e)=>handleClick(e,"firstName",key)}
-                                        /> 
-                                    </td>
-                                    <td> 
-                                        <input 
-                                            type="text" 
-                                            name={item.id} 
-                                            value={item.lastName} 
-                                            onChange={(e)=>handleChange(e,"lastName",key)}
-                                            onClick={(e)=>handleClick(e,"lastName",key)}
-                                        /> 
-                                    </td>
-                                    <td> 
-                                        <input 
-                                            type="text" 
-                                            name={item.id}
-                                            value={item.homePhone} 
-                                            onChange={(e)=>handleChange(e,"homePhone",key)} 
-                                            onClick={(e)=>handleClick(e,"homePhone",key)} 
-                                        /> 
-                                    </td>
-                                    {selected.index === key ? (<td>
-                                        <input 
-                                            id="selected" 
-                                            type="text"
-                                            size="7" 
-                                            name="selected" 
-                                            autoFocus value={selected.value} onChange={(e) => handleChange(e, "selected", key)}
-                                        />
-                                    </td>) : ("")}
-                                </tr>
-                            );
-                        })}
-                        {selected.index !== null ? (<tr><td></td><td></td><td><input type="submit"
-                            value="Submit" /></td></tr>):
-                        (<tr><td></td></tr>)}
-                    </table>
-                </form>
-            </div>
-        );
+    const handleUpdate = async (id, updatedBouncer) => {
+        await fetch(`http://localhost:8080/bouncer-sn041068644/resources/cst8218.sn041068644.bouncer.entity.bouncer/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedBouncer)
+        });
+    };
+
+    const handleDelete = async (id) => {
+        await fetch(`http://localhost:8080/bouncer-sn041068644/resources/cst8218.sn041068644.bouncer.entity.bouncer/${id}`, { method: 'DELETE' });
+        setBouncers(bouncers.filter(b => b.id !== id));
+    };
+    
+    const handleFormChange = (event) => {
+        setNewBouncer({ ...newBouncer, [event.target.name]: Number(event.target.value) });
     }
+
+    const handleAddBouncer = async () => {
+        //const newBouncer = { x: 0, y: 0, width: 50, height: 50 };
+        let response = await fetch("http://localhost:8080/bouncer-sn041068644/resources/cst8218.sn041068644.bouncer.entity.bouncer", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newBouncer)
+        });
+        let addedBouncer = await response.json();
+        setBouncers([...bouncers, addedBouncer]);
+        setShowForm(false);
+        const newBouncer = { x: 0, y: 0, width: 50, height: 50 };
+    };
+
+    return (
+        <div>
+            <h2>Bouncer List</h2>
+            <button onClick={() => setShowForm(true)}>Add New Bouncer</button>
+
+            {showForm && (
+                <div>
+                    <h3>New Bouncer Details</h3>
+                    <label>X: <input type="number" name="x" value={newBouncer.x} onChange={handleFormChange} /></label>
+                    <label>Y: <input type="number" name="y" value={newBouncer.y} onChange={handleFormChange} /></label>
+                    <label>Width: <input type="number" name="width" value={newBouncer.width} onChange={handleFormChange} /></label>
+                    <label>Height: <input type="number" name="height" value={newBouncer.height} onChange={handleFormChange} /></label>
+                    <button onClick={handleAddBouncer}>Submit</button>
+                    <button onClick={() => setShowForm(false)}>Cancel</button>
+                </div>
+            )}
+    
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>X</th>
+                        <th>Y</th>
+                        <th>Width</th>
+                        <th>Height</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {bouncers.map((bouncer, index) => (
+                        <tr key={bouncer.id}>
+                            <td>{bouncer.id}</td>
+                            <td><input type="number" value={bouncer.x} onChange={(e) => handleInputChange(e, index, 'x')} /></td>
+                            <td><input type="number" value={bouncer.y} onChange={(e) => handleInputChange(e, index, 'y')} /></td>
+                            <td><input type="number" value={bouncer.width} onChange={(e) => handleInputChange(e, index, 'width')} /></td>
+                            <td><input type="number" value={bouncer.height} onChange={(e) => handleInputChange(e, index, 'height')} /></td>
+                            <td>
+                                <button onClick={() => handleUpdate(bouncer.id, bouncer)}>Update</button>
+                                <button onClick={() => handleDelete(bouncer.id)}>Delete</button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+}
 
 const container = document.getElementById('root');
 const root = createRoot(container);
