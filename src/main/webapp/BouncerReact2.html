@@ -102,144 +102,180 @@
         );
       }
 
-      function MyApp() {
-        const [bouncers, setBouncers] = useState([]);
-        const [newBouncer, setNewBouncer] = useState({ x: 0, y: 0, size: 50, maxTravel: 50, currentTravel: 0 });
-        const [showForm, setShowForm] = useState(false);
+function MyApp() {
+  const [bouncers, setBouncers] = useState([]);
+  const [newBouncer, setNewBouncer] = useState({ x: 0, y: 0, size: 50, maxTravel: 50, currentTravel: 0 });
+  const [showForm, setShowForm] = useState(false);
+  // NEW: Track whether auto-refresh is enabled
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  // NEW: Track the ID of the bouncer currently being edited
+  const [editingBouncerId, setEditingBouncerId] = useState(null);
 
-        // Get bouncers from the server.
-        useEffect(() => {
-          async function fetchBouncers() {
-            let response = await fetch("http://localhost:8080/Web_Assignment2/resources/cst8218.sn041068644.bouncer.entity.bouncer");
-            let data = await response.json();
-            setBouncers(data);
-          }
-          
-          fetchBouncers();
-          const interval = setInterval(fetchBouncers, 300); // Auto-refresh
-          return () => clearInterval(interval);
-        }, []);
-
-        const handleInputChange = (event, index, field) => {
-          const updatedBouncers = [...bouncers];
-          updatedBouncers[index] = { ...updatedBouncers[index], [field]: event.target.value };
-          setBouncers(updatedBouncers);
-        };
-
-        // Update bouncer info.
-        const handleUpdate = async (id, updatedBouncer) => {
-          await fetch(`http://localhost:8080/Web_Assignment2/resources/cst8218.sn041068644.bouncer.entity.bouncer/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedBouncer)
-          });
-        };
-
-        // Delete the bouncer.
-        const handleDelete = async (id) => {
-          await fetch(`http://localhost:8080/Web_Assignment2/resources/cst8218.sn041068644.bouncer.entity.bouncer/${id}`, { method: 'DELETE' });
-          setBouncers(bouncers.filter(b => b.id !== id));
-        };
-
-        const handleFormChange = (event) => {
-          setNewBouncer({ ...newBouncer, [event.target.name]: Number(event.target.value) });
-        };
-
-        // Add bouncer to the game.
-        const handleAddBouncer = async () => {
-          let response = await fetch("http://localhost:8080/Web_Assignment2/resources/cst8218.sn041068644.bouncer.entity.bouncer", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newBouncer)
-          });
-          let addedBouncer = await response.json();
-          setBouncers([...bouncers, addedBouncer]);
-          setShowForm(false);
-        };
-
-        return (
-          <div>
-            <h2>Bouncer List</h2>
-            <button onClick={() => setShowForm(true)}>Add New Bouncer</button>
-            
-            {showForm && (
-              <div>
-                <h3>New Bouncer Details</h3>
-                <label>
-                  X: 
-                  <input type="number" name="x" value={newBouncer.x} onChange={handleFormChange} />
-                </label>
-                <label>
-                  Y: 
-                  <input type="number" name="y" value={newBouncer.y} onChange={handleFormChange} />
-                </label>
-                <label>
-                  size: 
-                  <input type="number" name="size" value={newBouncer.size} onChange={handleFormChange} />
-                </label>
-                <label>
-                  maxTravel: 
-                  <input type="number" name="maxTravel" value={newBouncer.maxTravel} onChange={handleFormChange} />
-                </label>
-                <label>
-                  currentTravel: 
-                  <input type="number" name="currentTravel" value={newBouncer.currentTravel} onChange={handleFormChange} />
-                </label>
-                <button onClick={handleAddBouncer}>Submit</button>
-                <button onClick={() => setShowForm(false)}>Cancel</button>
-              </div>
-            )}
-    
-            <table border="1">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>X</th>
-                  <th>Y</th>
-                  <th>Size</th>
-                  <th>MaxTravel</th>
-                  <th>CurrentTravel</th>
-                  <th>MovementDirection</th>
-                  <th>DirectionChangeCount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bouncers.map((bouncer, index) => (
-                  <tr key={bouncer.id}>
-                    <td>{bouncer.id}</td>
-                    <td>
-                      <input type="number" value={bouncer.x} onChange={(e) => handleInputChange(e, index, 'x')} />
-                    </td>
-                    <td>
-                      <input type="number" value={bouncer.y} onChange={(e) => handleInputChange(e, index, 'y')} />
-                    </td>
-                    <td>
-                      <input type="number" value={bouncer.size} onChange={(e) => handleInputChange(e, index, 'size')} />
-                    </td>
-                    <td>
-                      <input type="number" value={bouncer.maxTravel} onChange={(e) => handleInputChange(e, index, 'maxTravel')} />
-                    </td>
-                    <td>
-                      <input type="number" value={bouncer.currentTravel} onChange={(e) => handleInputChange(e, index, 'currentTravel')} />
-                    </td>
-                    <td>
-                      <input type="number" value={bouncer.mvtDirection} onChange={(e) => handleInputChange(e, index, 'mvtDirection')} />
-                    </td>
-                    <td>
-                      <input type="number" value={bouncer.dirChangeCount} onChange={(e) => handleInputChange(e, index, 'dirChangeCount')} />
-                    </td>
-                    <td>
-                      <button onClick={() => handleUpdate(bouncer.id, bouncer)}>Update</button>
-                      <button onClick={() => handleDelete(bouncer.id)}>Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <BouncerCanvas bouncers={bouncers} />
-          </div>
-        );
+  // Fetch bouncers only if auto-refresh is enabled.
+  useEffect(() => {
+    if (autoRefresh) {
+      async function fetchBouncers() {
+        let response = await fetch("http://localhost:8080/Web_Assignment2/resources/cst8218.sn041068644.bouncer.entity.bouncer");
+        let data = await response.json();
+        setBouncers(data);
       }
+      
+      fetchBouncers();
+      const interval = setInterval(fetchBouncers, 300);
+      return () => clearInterval(interval);
+    }
+  }, [autoRefresh]);
+
+  const handleInputChange = (event, index, field) => {
+    const updatedBouncers = [...bouncers];
+    updatedBouncers[index] = { ...updatedBouncers[index], [field]: event.target.value };
+    setBouncers(updatedBouncers);
+  };
+
+  // Existing update function – now used only when saving edits.
+  const handleUpdate = async (id, updatedBouncer) => {
+    await fetch(`http://localhost:8080/Web_Assignment2/resources/cst8218.sn041068644.bouncer.entity.bouncer/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedBouncer)
+    });
+  };
+
+  // Delete the bouncer.
+  const handleDelete = async (id) => {
+    await fetch(`http://localhost:8080/Web_Assignment2/resources/cst8218.sn041068644.bouncer.entity.bouncer/${id}`, { method: 'DELETE' });
+    setBouncers(bouncers.filter(b => b.id !== id));
+  };
+
+  const handleFormChange = (event) => {
+    setNewBouncer({ ...newBouncer, [event.target.name]: Number(event.target.value) });
+  };
+
+  // Add bouncer to the game.
+  const handleAddBouncer = async () => {
+    let response = await fetch("http://localhost:8080/Web_Assignment2/resources/cst8218.sn041068644.bouncer.entity.bouncer", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newBouncer)
+    });
+    let addedBouncer = await response.json();
+    setBouncers([...bouncers, addedBouncer]);
+    setShowForm(false);
+  };
+
+  // NEW: Enter editing mode for a given bouncer.
+  const handleEdit = (id) => {
+    setEditingBouncerId(id);
+    setAutoRefresh(false);
+  };
+
+  // NEW: Save the updated bouncer and resume auto-refresh.
+  const handleSave = async (bouncer) => {
+    await handleUpdate(bouncer.id, bouncer);
+    setEditingBouncerId(null);
+    setAutoRefresh(true);
+  };
+
+  // NEW: Cancel editing and resume auto-refresh (discarding local changes from editing).
+  const handleCancel = () => {
+    setEditingBouncerId(null);
+    setAutoRefresh(true);
+  };
+
+  return (
+    <div>
+      <h2>Bouncer List</h2>
+      <button onClick={() => setShowForm(true)}>Add New Bouncer</button>
+      
+      {showForm && (
+        <div>
+          <h3>New Bouncer Details</h3>
+          <label>
+            X: 
+            <input type="number" name="x" value={newBouncer.x} onChange={handleFormChange} />
+          </label>
+          <label>
+            Y: 
+            <input type="number" name="y" value={newBouncer.y} onChange={handleFormChange} />
+          </label>
+          <label>
+            size: 
+            <input type="number" name="size" value={newBouncer.size} onChange={handleFormChange} />
+          </label>
+          <label>
+            maxTravel: 
+            <input type="number" name="maxTravel" value={newBouncer.maxTravel} onChange={handleFormChange} />
+          </label>
+          <label>
+            currentTravel: 
+            <input type="number" name="currentTravel" value={newBouncer.currentTravel} onChange={handleFormChange} />
+          </label>
+          <button onClick={handleAddBouncer}>Submit</button>
+          <button onClick={() => setShowForm(false)}>Cancel</button>
+        </div>
+      )}
+
+      <table border="1">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>X</th>
+            <th>Y</th>
+            <th>Size</th>
+            <th>MaxTravel</th>
+            <th>CurrentTravel</th>
+            <th>MovementDirection</th>
+            <th>DirectionChangeCount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {bouncers.map((bouncer, index) => (
+            <tr key={bouncer.id} style={editingBouncerId === bouncer.id ? { backgroundColor: 'red' } : {}}>
+              <td>{bouncer.id}</td>
+              <td>
+                <input type="number" value={bouncer.x} onChange={(e) => handleInputChange(e, index, 'x')} />
+              </td>
+              <td>
+                <input type="number" value={bouncer.y} onChange={(e) => handleInputChange(e, index, 'y')} />
+              </td>
+              <td>
+                <input type="number" value={bouncer.size} onChange={(e) => handleInputChange(e, index, 'size')} />
+              </td>
+              <td>
+                <input type="number" value={bouncer.maxTravel} onChange={(e) => handleInputChange(e, index, 'maxTravel')} />
+              </td>
+              <td>
+                <input type="number" value={bouncer.currentTravel} onChange={(e) => handleInputChange(e, index, 'currentTravel')} />
+              </td>
+              <td>
+                <input type="number" value={bouncer.mvtDirection} onChange={(e) => handleInputChange(e, index, 'mvtDirection')} />
+              </td>
+              <td>
+                <input type="number" value={bouncer.dirChangeCount} onChange={(e) => handleInputChange(e, index, 'dirChangeCount')} />
+              </td>
+              <td>
+                {editingBouncerId === bouncer.id ? (
+                  <>
+                    <button onClick={() => handleSave(bouncer)}>Update</button>
+                    <button onClick={handleCancel}>Cancel</button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => handleEdit(bouncer.id)}>Update</button>
+                    <button onClick={() => handleDelete(bouncer.id)}>Delete</button>
+                  </>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <BouncerCanvas bouncers={bouncers} />
+    </div>
+  );
+}
+
 
       const container = document.getElementById('root');
       const root = createRoot(container);
