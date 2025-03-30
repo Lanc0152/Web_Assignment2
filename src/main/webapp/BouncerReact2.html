@@ -26,7 +26,7 @@ function MyApp() {
 
     useEffect(() => {
         async function fetchBouncers() {
-            let response = await fetch("http://localhost:8080/bouncer-sn041068644/resources/cst8218.sn041068644.bouncer.entity.bouncer");
+                let response = await fetch("http://localhost:8080/bouncer-sn041068644/resources/cst8218.sn041068644.bouncer.entity.bouncer");
             let data = await response.json();
             setBouncers(data);
         }
@@ -57,10 +57,10 @@ function MyApp() {
     
     const handleFormChange = (event) => {
         setNewBouncer({ ...newBouncer, [event.target.name]: Number(event.target.value) });
-    }
+    };
 
     const handleAddBouncer = async () => {
-        //const newBouncer = { x: 0, y: 0, width: 50, height: 50 };
+        const newBouncer = { x: 0, y: 0, width: 50, height: 50 };
         let response = await fetch("http://localhost:8080/bouncer-sn041068644/resources/cst8218.sn041068644.bouncer.entity.bouncer", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -69,7 +69,7 @@ function MyApp() {
         let addedBouncer = await response.json();
         setBouncers([...bouncers, addedBouncer]);
         setShowForm(false);
-        const newBouncer = { x: 0, y: 0, width: 50, height: 50 };
+        //const newBouncer = { x: 0, y: 0, width: 50, height: 50 };
     };
 
     return (
